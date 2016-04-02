@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using NDesk.Options;
+using Microsoft.AspNet.SignalR.Client;
+using System.Threading;
 
 namespace SteamBot
 {
@@ -164,6 +166,13 @@ namespace SteamBot
 
                 var bmi = new BotManagerInterpreter(manager);
 
+
+                IHubProxy _hub;
+                string url = @"http://giveawayvn.azurewebsites.net/";
+                var connection = new HubConnection(url);
+                _hub = connection.CreateHubProxy("ChatHub");
+                connection.Start().Wait();
+                _hub.On<string,string>("addNewMessageToPage", (name,message) => bmi.CommandInterpreter("exec 0 "+message));
                 // command interpreter loop.
                 do
                 {

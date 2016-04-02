@@ -3,6 +3,7 @@ using SteamTrade;
 using SteamTrade.TradeOffer;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using TradeAsset = SteamTrade.TradeOffer.TradeOffer.TradeStatusUser.TradeAsset;
 
 namespace SteamBot
@@ -27,6 +28,7 @@ namespace SteamBot
                 Log.Info("And I will get " +  theirItems.Count + " of their items.");
 
                 //do validation logic etc
+                
                 if (DummyValidation(myItems, theirItems))
                 {
                     TradeOfferAcceptResponse acceptResp = offer.Accept();
@@ -67,10 +69,10 @@ namespace SteamBot
         {
             if (IsAdmin)
             {
+
                 //creating a new trade offer
                 var offer = Bot.NewTradeOffer(OtherSID);
-
-                //offer.Items.AddMyItem(0, 0, 0);
+                offer.Items.AddMyItem(0, 0, 0);
                 if (offer.Items.NewVersion)
                 {
                     string newOfferId;
@@ -94,6 +96,42 @@ namespace SteamBot
                         Bot.AcceptAllMobileTradeConfirmations();
                         Log.Success("Trade offer sent : Offer ID " + newOfferId);
                     }
+                }
+            }
+        }
+
+        // Format Command : exec 0 SteamID-token-Item1ID,Item2ID,Item3ID.....
+        public override void OnBotCommand(string command)
+        {
+            Match match = Regex.Match(command, @"([0-9]+)-([A-Za-z0-9]+)-([0-9\,]+)$");
+
+            // Getting User Steam ID
+            SteamID OtherID = new SteamID();
+            OtherID.SetFromUInt64(UInt64.Parse(match.Groups[1].ToString()));
+
+            // Getting User token
+            var token = match.Groups[2].ToString();
+
+            //creating a new trade offer with token
+            var offerWithToken = Bot.NewTradeOffer(OtherID);
+
+            // Add item to offer
+            string[] allItems = match.Groups[3].ToString().Split(',');
+
+            foreach (var item in allItems)
+            {
+                long assetID = Int64.Parse(item);
+                offerWithToken.Items.AddTheirItem(570, 2, assetID);
+            }
+
+            if (offerWithToken.Items.NewVersion)
+            {
+                string newOfferId;
+                // "token" should be replaced with the actual token from the other user
+                if (offerWithToken.SendWithToken(out newOfferId, token))
+                {
+                    //Bot.AcceptAllMobileTradeConfirmations();
+                    Log.Success("Trade offer sent : Offer ID " + newOfferId);
                 }
             }
         }
@@ -130,12 +168,13 @@ namespace SteamBot
 
         private bool DummyValidation(List<TradeAsset> myAssets, List<TradeAsset> theirAssets)
         {
-            //compare items etc
-            if (myAssets.Count == theirAssets.Count)
-            {
-                return true;
-            }
-            return false;
+            ////compare items etc
+            //if (myAssets.Count == theirAssets.Count)
+            //{
+            //    return true;
+            //}
+            //return false;
+            return true;
         }
     }
 }

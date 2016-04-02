@@ -40,7 +40,7 @@ namespace SteamBot
 
         public override bool OnTradeRequest() 
         {
-            return true;
+            return false;
         }
         
         public override void OnTradeError (string error) 
